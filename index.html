@@ -3,11 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>District 5 Lookup | Jack for School Board</title>
+  <title>Volunteer Toolkit | Jack for School Board</title>
   <link rel="preconnect" href="https://unpkg.com">
+  <link rel="icon" type="image/png" href="assets/images/favicon.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@600;700&display=swap" rel="stylesheet">
@@ -25,7 +26,7 @@
       <nav class="primary-nav" aria-label="Primary">
         <ul id="nav-links" class="nav-list">
           <li><a class="nav-link current" href="index.html#map">Map</a></li>
-          <li><a class="nav-link" href="events.html">Events</a></li>
+          <li><a class="nav-link" href="pages/events.html">Events</a></li>
           <li><a class="nav-link" href="https://jacklainforschoolboard.com/" target="_blank" rel="noopener">Website</a></li>
         </ul>
       </nav>
@@ -77,7 +78,7 @@
 
   <footer id="page-footer"></footer>
   <script>
-    fetch("footer.html")
+    fetch("partials/footer.html")
       .then(r => r.text())
       .then(html => document.getElementById("page-footer").innerHTML = html);
   </script>
@@ -85,6 +86,6 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
   <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-  <script src="app.js" defer></script>
+  <script src="assets/js/app.js" defer></script>
 </body>
 </html>

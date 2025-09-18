@@ -539,7 +539,7 @@
     const inside = isPointInsideDistrict(latlng);
 
     if (inside === null) {
-      setStatus('error', 'District boundary not available. Add a valid GeoJSON file at data/district5.geojson.');
+      setStatus('error', 'District boundary not available. Add a valid GeoJSON file at assets/data/district5.geojson.');
       return;
     }
 
@@ -838,7 +838,7 @@
       return Promise.resolve();
     }
 
-    return fetch('data/district5.geojson', { cache: 'reload' })
+    return fetch('assets/data/district5.geojson', { cache: 'reload' })
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Failed to fetch district boundary (status ${response.status}).`);
@@ -871,7 +871,7 @@
       })
       .catch((error) => {
         console.error(error);
-        setStatus('error', 'Could not load District 5 boundary. Add a valid GeoJSON file at data/district5.geojson.');
+        setStatus('error', 'Could not load District 5 boundary. Add a valid GeoJSON file at assets/data/district5.geojson.');
       });
   }
 
