@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campaign Events | Jack for School Board</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body class="events-page">
+  <header class="page-header" id="top">
+    <div class="header-bar">
+      <a class="brand" href="index.html#top">Jack for School Board Toolkit</a>
+      <button id="nav-toggle" class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Toggle navigation">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="primary-nav" aria-label="Primary">
+        <ul id="nav-links" class="nav-list">
+          <li><a class="nav-link" href="index.html#map">Map</a></li>
+          <li><a class="nav-link current" href="events.html">Events</a></li>
+          <li><a class="nav-link" href="https://jacklainforschoolboard.com/" target="_blank" rel="noopener">Website</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="hero-content">
+      <h1>Campaign Events</h1>
+      <p>Join Jack Lain on the trail. RSVP for canvasses, house parties, and upcoming volunteer opportunities.</p>
+    </div>
+  </header>
+
+  <main class="events-page-main">
+    <section class="events" aria-label="Upcoming events">
+      <div class="events-highlight">
+        <span class="highlight-badge">Next Up</span>
+      </div>
+      <h2>Upcoming Events</h2>
+      <p>Join Jack for conversations across Santa Fe and help spread the word to neighbors and friends.</p>
+
+      <section class="events-grid" aria-label="Volunteer opportunities">
+        <article class="event-card">
+          <div class="event-meta">
+            <span class="event-date">Fri · Sept 19</span>
+            <span class="event-time">6:00 – 7:00 PM</span>
+          </div>
+          <h3>Community Forum – Santa Fe Country Club</h3>
+          <p class="event-summary">Join us for the <strong>Community Forum of School Board Candidates</strong> on <strong>September 19</strong>, from <strong>6:00 pm to 7:00 pm</strong> at the <strong>Santa Fe Country Club</strong>.</p>
+          <p class="event-location">Santa Fe Country Club · Santa Fe, NM</p>
+        </article>
+
+        <article class="event-card">
+          <div class="event-meta">
+            <span class="event-date">Sat · Sept 27</span>
+            <span class="event-time">10:00 – 11:00 AM</span>
+          </div>
+          <h3>Coffee with Jack – Herb Martinez Park</h3>
+          <p class="event-summary">Meet Jack and enjoy coffee and donuts on <strong>September 27</strong>, from <strong>10:00 am to 11:00 am</strong> at <strong>Herb Martinez Park</strong> (off Camino Carlos Rey).</p>
+          <p class="event-location">Herb Martinez Park · Santa Fe, NM</p>
+        </article>
+
+        <article class="event-card event-highlight">
+          <div class="event-meta">
+            <span class="event-date">Mon · Oct 7</span>
+            <span class="event-time">All Day</span>
+          </div>
+          <h3>Early Voting Begins</h3>
+        </article>
+
+        <article class="event-card">
+          <div class="event-meta">
+            <span class="event-date">Sat · Oct 11</span>
+            <span class="event-time">10:00 – 11:00 AM</span>
+          </div>
+          <h3>Coffee with Jack – Franklin Miles Park</h3>
+          <p class="event-summary">Meet Jack and enjoy coffee and donuts on <strong>October 11</strong>, from <strong>10:00 am to 11:00 am</strong> at <strong>Franklin Miles Park</strong>.</p>
+          <p class="event-location">Franklin Miles Park · Santa Fe, NM</p>
+        </article>
+
+        <article class="event-card">
+          <div class="event-meta">
+            <span class="event-date">Tue · Nov 4, 2025</span>
+            <span class="event-time">All Day</span>
+          </div>
+          <h3>Election Day</h3>
+          <p class="event-summary">Election Day is Tuesday, November 4, 2025 across the United States.</p>
+          <p class="event-location">United States</p>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <footer id="page-footer"></footer>
+<script>
+  fetch("footer.html")
+    .then(r => r.text())
+    .then(html => document.getElementById("page-footer").innerHTML = html);
+</script>
+
+
+  <script src="app.js" defer></script>
+</body>
+</html>

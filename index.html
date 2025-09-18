@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>District 5 Lookup | Jack for School Board</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@600;700&display=swap" rel="stylesheet">
+
+</head>
+<body>
+  <header class="page-header" id="top">
+    <div class="header-bar">
+      <a class="brand" href="#top">Jack for School Board Toolkit</a>
+      <button id="nav-toggle" class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Toggle navigation">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="primary-nav" aria-label="Primary">
+        <ul id="nav-links" class="nav-list">
+          <li><a class="nav-link current" href="index.html#map">Map</a></li>
+          <li><a class="nav-link" href="events.html">Events</a></li>
+          <li><a class="nav-link" href="https://jacklainforschoolboard.com/" target="_blank" rel="noopener">Website</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="hero-content">
+      <h1>District 5 Map Lookup</h1>
+      <p>Enter an address to see if it's inside School Board District&nbsp;5. The map outline shows the official district boundary.</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="lookup-panel">
+      <form id="lookup-form" class="lookup-form" autocomplete="off" novalidate>
+        <label for="address-input" class="sr-only">Search for an address in Santa Fe, NM</label>
+        <input
+          id="address-input"
+          class="search-input"
+          type="search"
+          name="address"
+          placeholder="Search addresses (min. 3 characters)"
+          aria-autocomplete="list"
+          aria-controls="search-results"
+          aria-expanded="false"
+        />
+        <ul id="search-results" class="search-results" role="listbox" aria-label="Suggested addresses"></ul>
+      </form>
+
+      <div id="lookup-status" class="status status-neutral">Search for an address to begin.</div>
+      <button id="reset-view" type="button" class="reset-button">Reset Map</button>
+    </section>
+
+    <div id="map" class="map" aria-label="District 5 map"></div>
+
+    <section class="notes" aria-label="Lookup tips">
+      <div class="notes-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+          <path d="M12 3a6 6 0 0 0-3.74 10.62l.3.25c.55.47.89 1.03.96 1.7l.02.24h4.92l.02-.24c.07-.67.4-1.23.96-1.7l.3-.25A6 6 0 0 0 12 3zm-1.38 16.5h2.76a1.38 1.38 0 0 1-2.76 0z"/>
+        </svg>
+      </div>
+      <div class="notes-content">
+        <h2>Tips</h2>
+        <ul>
+          <li>Use complete street addresses when possible (street number, street name).</li>
+          <li>If you already know you are in District&nbsp;5, <span class="note-highlight">use this to help your neighbors confirm.</span></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer id="page-footer"></footer>
+  <script>
+    fetch("footer.html")
+      .then(r => r.text())
+      .then(html => document.getElementById("page-footer").innerHTML = html);
+  </script>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+  <script src="app.js" defer></script>
+</body>
+</html>
