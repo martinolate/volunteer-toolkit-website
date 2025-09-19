@@ -28,17 +28,6 @@ volunteer-toolkit-website/
 - **Leaflet.js** — interactive maps
 - **GeoJSON** — boundary data
 
----
-
-## 🌐 Deployment
-
-The site is hosted with **GitHub Pages** at:
-
-```
-https://martinolate.github.io/volunteer-toolkit-website/
-```
-
----
 
 ## ⚠️ Notes
 
