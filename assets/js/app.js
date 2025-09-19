@@ -33,6 +33,9 @@
     maxLocalEntries: 240
   };
 
+  const supportsAbortController = typeof window !== 'undefined'
+    && typeof window.AbortController === 'function';
+
   function normalizeText(value) {
     try {
       return value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -59,6 +62,7 @@
       this.localIndex = new Map();
       this.localOrder = [];
       this.currentAbortController = null;
+      this.abortSupported = supportsAbortController;
     }
 
     normalize(value) {
@@ -79,6 +83,14 @@
       const searchable = `${raw.primary || ''} ${raw.secondary || ''}`.trim();
       const normalized = this.normalize(searchable);
       const tokens = this.tokenize(normalized);
+      const primaryNormalized = raw.primary ? this.normalize(raw.primary) : '';
+      const primaryTokens = this.tokenize(primaryNormalized);
+      const secondaryNormalized = raw.secondary ? this.normalize(raw.secondary) : '';
+      const secondaryTokens = this.tokenize(secondaryNormalized);
+      const labelNormalized = raw.label ? this.normalize(raw.label) : searchable ? normalized : '';
+      const derivedHouseNumber = primaryTokens.length && /^\d+$/.test(primaryTokens[0])
+        ? primaryTokens[0]
+        : null;
 
       const candidate = {
         ...raw,
@@ -86,7 +98,13 @@
         searchNormalized: normalized,
         searchTokens: tokens,
         insideDistrict: null,
-        distanceMeters: null
+        distanceMeters: null,
+        primaryNormalized,
+        primaryTokens,
+        secondaryNormalized,
+        secondaryTokens,
+        labelNormalized,
+        houseNumber: raw.houseNumber || derivedHouseNumber || null
       };
 
       if (raw.latlng && this.distanceCenter) {
@@ -145,73 +163,205 @@
       }
     }
 
-    scoreCandidate(queryTokens, candidate) {
+    scoreCandidate(queryTokens, candidate, queryNormalized, rawQuery) {
       if (!Array.isArray(queryTokens) || !queryTokens.length) {
         return 0;
       }
 
       const candidateTokens = candidate.searchTokens || [];
+      const primaryTokens = candidate.primaryTokens || [];
+      const secondaryTokens = candidate.secondaryTokens || [];
+      const primaryNormalized = candidate.primaryNormalized || '';
+      const searchNormalized = candidate.searchNormalized || '';
+      const labelNormalized = candidate.labelNormalized || '';
+      const queryNormalizedValue = queryNormalized || '';
+      const rawQueryValue = rawQuery || '';
+      const numericTokens = queryTokens.filter((token) => /^\d+$/.test(token));
+      const trimmedRawQuery = rawQueryValue.trim();
+      const firstNumericToken = numericTokens[0] || '';
+      const expectsHouseNumber = /^\d+\s+/.test(trimmedRawQuery)
+        || (firstNumericToken
+          && firstNumericToken.length <= 4
+          && trimmedRawQuery.startsWith(firstNumericToken)
+          && trimmedRawQuery.length > firstNumericToken.length);
+      const expectsPostalCode = numericTokens.some((token) => token.length >= 5
+        || (!expectsHouseNumber && token.length >= 4));
+      const normalizedPostcode = candidate.postcode
+        ? String(candidate.postcode).replace(/\D+/g, '')
+        : null;
       let score = 0;
+      let matchedTokens = 0;
+      let sequentialMatches = 0;
+      let lastMatchPosition = -1;
 
-      queryTokens.forEach((token) => {
+      queryTokens.forEach((token, tokenIndex) => {
         if (!token) {
           return;
         }
 
-        if (candidateTokens.includes(token)) {
-          score += 10;
-          return;
+        const isNumeric = /^\d+$/.test(token);
+        const looksLikeZip = expectsPostalCode && token.length >= 4 && (!expectsHouseNumber || tokenIndex > 0);
+        const exactPrimaryIndex = primaryTokens.indexOf(token);
+        const prefixPrimaryIndex = exactPrimaryIndex !== -1
+          ? exactPrimaryIndex
+          : primaryTokens.findIndex((part) => part.startsWith(token));
+        const exactSecondaryIndex = secondaryTokens.indexOf(token);
+        const prefixSecondaryIndex = exactSecondaryIndex !== -1
+          ? exactSecondaryIndex
+          : secondaryTokens.findIndex((part) => part.startsWith(token));
+        const exactAnyIndex = candidateTokens.indexOf(token);
+        const prefixAnyIndex = exactAnyIndex !== -1
+          ? exactAnyIndex
+          : candidateTokens.findIndex((part) => part.startsWith(token));
+
+        let tokenScore = 0;
+        let matchPosition = -1;
+
+        if (isNumeric) {
+          if (looksLikeZip && normalizedPostcode) {
+            if (normalizedPostcode === token) {
+              matchPosition = primaryTokens.length + secondaryTokens.length + 1;
+              tokenScore += 18;
+            } else if (normalizedPostcode.startsWith(token)) {
+              matchPosition = primaryTokens.length + secondaryTokens.length + 1;
+              tokenScore += 12;
+            }
+          }
+
+          if (matchPosition === -1 && primaryTokens.length && primaryTokens[0].startsWith(token)) {
+            matchPosition = 0;
+            tokenScore += primaryTokens[0] === token ? 20 : 16;
+          } else if (matchPosition === -1 && prefixAnyIndex !== -1) {
+            matchPosition = prefixAnyIndex;
+            tokenScore += 8;
+          } else if (matchPosition === -1 && searchNormalized.includes(token)) {
+            tokenScore += 6;
+          } else if (matchPosition === -1) {
+            tokenScore -= 8;
+          }
+        } else {
+          if (exactPrimaryIndex !== -1) {
+            matchPosition = exactPrimaryIndex;
+            tokenScore += 13;
+          } else if (prefixPrimaryIndex !== -1) {
+            matchPosition = prefixPrimaryIndex;
+            tokenScore += 10;
+          } else if (exactAnyIndex !== -1) {
+            matchPosition = exactAnyIndex;
+            tokenScore += 9;
+          } else if (prefixAnyIndex !== -1) {
+            matchPosition = prefixAnyIndex;
+            tokenScore += 6;
+          } else if (exactSecondaryIndex !== -1) {
+            matchPosition = primaryTokens.length + exactSecondaryIndex;
+            tokenScore += 5;
+          } else if (prefixSecondaryIndex !== -1) {
+            matchPosition = primaryTokens.length + prefixSecondaryIndex;
+            tokenScore += 3;
+          } else if (searchNormalized.includes(token)) {
+            tokenScore += 2;
+          } else {
+            tokenScore -= 4;
+          }
         }
 
-        const prefixHit = candidateTokens.some((part) => part.startsWith(token));
-        if (prefixHit) {
-          score += 7;
-        } else if (candidate.searchNormalized && candidate.searchNormalized.includes(token)) {
-          score += 4;
+        if (matchPosition !== -1) {
+          matchedTokens += 1;
+
+          if (matchPosition > lastMatchPosition) {
+            sequentialMatches += 1;
+            lastMatchPosition = matchPosition;
+            tokenScore += 1.5;
+          }
         }
+
+        score += tokenScore;
       });
 
+      if (matchedTokens < queryTokens.length) {
+        score -= (queryTokens.length - matchedTokens) * 3;
+      }
+
+      if (matchedTokens) {
+        score += matchedTokens * 2;
+      }
+
+      if (sequentialMatches >= 2) {
+        score += sequentialMatches * 1.5;
+      }
+
+      if (queryNormalizedValue.length >= 4) {
+        if (primaryNormalized.startsWith(queryNormalizedValue)) {
+          score += 10;
+        } else if (searchNormalized.startsWith(queryNormalizedValue)) {
+          score += 6;
+        } else if (labelNormalized.startsWith(queryNormalizedValue)) {
+          score += 4;
+        }
+      }
+
+      if (rawQueryValue.length >= 4) {
+        const rawLower = rawQueryValue.toLowerCase();
+        if (candidate.primary && candidate.primary.toLowerCase().startsWith(rawLower)) {
+          score += 6;
+        } else if (candidate.label && candidate.label.toLowerCase().startsWith(rawLower)) {
+          score += 3;
+        }
+      }
+
+      if (expectsHouseNumber && !candidate.houseNumber) {
+        score -= 6;
+      }
+
       if (candidateTokens.length) {
-        score -= Math.max(candidateTokens.length - queryTokens.length, 0) * 0.5;
+        const extraTokens = Math.max(candidateTokens.length - queryTokens.length, 0);
+        if (extraTokens) {
+          score -= extraTokens * 0.4;
+        }
       }
 
       if (typeof candidate.distanceMeters === 'number') {
-        const normalizedDistance = Math.min(candidate.distanceMeters, 8000);
-        const proximityBoost = Math.max(0, 1 - normalizedDistance / 8000);
-        score += proximityBoost * 6;
+        const normalizedDistance = Math.min(candidate.distanceMeters, 6000);
+        const proximityBoost = Math.max(0, 1 - normalizedDistance / 6000);
+        score += proximityBoost * 5;
       }
 
       if (candidate.insideDistrict === true) {
-        score += 5;
+        score += 6;
       } else if (candidate.insideDistrict === false) {
-        score -= 1.5;
+        score -= 2;
       }
 
       return score;
     }
 
-    scoreCandidates(candidates, queryTokens) {
+    scoreCandidates(candidates, queryTokens, queryNormalized, rawQuery) {
       const scored = candidates.map((candidate) => ({
         candidate,
-        score: this.scoreCandidate(queryTokens, candidate)
+        score: this.scoreCandidate(queryTokens, candidate, queryNormalized, rawQuery)
       }));
 
-      const positive = scored.filter((entry) => entry.score > 0);
+      const positive = scored
+        .filter((entry) => entry.score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      if (positive.length >= this.maxSuggestions) {
+        return positive.slice(0, this.maxSuggestions);
+      }
 
       if (positive.length) {
-        return positive.sort((a, b) => b.score - a.score);
+        const remainder = scored
+          .filter((entry) => entry.score <= 0)
+          .sort((a, b) => b.score - a.score);
+        return [...positive, ...remainder].slice(0, this.maxSuggestions);
       }
 
       return scored
         .sort((a, b) => b.score - a.score)
-        .slice(0, this.maxSuggestions)
-        .map((entry, index) => ({
-          candidate: entry.candidate,
-          score: -index - 1
-        }));
+        .slice(0, this.maxSuggestions);
     }
 
-    searchLocalMatches(queryTokens) {
+    searchLocalMatches(queryTokens, queryNormalized, rawQuery) {
       if (!this.localOrder.length) {
         return [];
       }
@@ -220,7 +370,7 @@
         .map((key) => this.localIndex.get(key))
         .filter(Boolean);
 
-      return this.scoreCandidates(candidates, queryTokens);
+      return this.scoreCandidates(candidates, queryTokens, queryNormalized, rawQuery);
     }
 
     mergeMatches(localMatches, remoteMatches) {
@@ -251,7 +401,7 @@
       const normalized = this.normalize(trimmed);
       const tokens = this.tokenize(normalized);
       const localMatches = trimmed.length >= this.minQueryLength
-        ? this.searchLocalMatches(tokens)
+        ? this.searchLocalMatches(tokens, normalized, trimmed)
         : [];
 
       return {
@@ -266,31 +416,36 @@
     fetchRemote(rawQuery, normalized, tokens) {
       if (this.cache.has(normalized)) {
         const cached = this.cache.get(normalized) || [];
-        return Promise.resolve(this.scoreCandidates(cached, tokens));
+        return Promise.resolve(this.scoreCandidates(cached, tokens, normalized, rawQuery));
       }
 
-      if (this.currentAbortController) {
-        this.currentAbortController.abort();
+      let controller = null;
+      if (this.abortSupported) {
+        if (this.currentAbortController) {
+          this.currentAbortController.abort();
+        }
+
+        controller = new AbortController();
+        this.currentAbortController = controller;
       }
 
-      const controller = new AbortController();
-      this.currentAbortController = controller;
+      const remoteOptions = controller ? { signal: controller.signal } : {};
 
-      return this.remoteFetcher(rawQuery, { signal: controller.signal })
+      return this.remoteFetcher(rawQuery, remoteOptions)
         .then((rawList) => rawList.map((item) => this.prepareCandidate(item)))
         .then((prepared) => {
           this.cacheResult(normalized, prepared);
           this.indexCandidates(prepared);
-          return this.scoreCandidates(prepared, tokens);
+          return this.scoreCandidates(prepared, tokens, normalized, rawQuery);
         })
         .catch((error) => {
-          if (error && error.name === 'AbortError') {
+          if (controller && error && error.name === 'AbortError') {
             return [];
           }
           throw error;
         })
         .finally(() => {
-          if (this.currentAbortController === controller) {
+          if (controller && this.currentAbortController === controller) {
             this.currentAbortController = null;
           }
         });
@@ -659,9 +814,17 @@
     const latlng = L.latLng(parseFloat(result.lat), parseFloat(result.lon));
 
     const address = result.address || {};
+    const houseNumber = address.house_number ? String(address.house_number).trim() : null;
+    const streetName = address.road
+      || address.pedestrian
+      || address.cycleway
+      || address.footway
+      || address.path
+      || address.neighbourhood
+      || address.suburb;
     const primary = [
-      address.house_number,
-      address.road || address.neighbourhood || address.suburb
+      houseNumber,
+      streetName
     ].filter(Boolean).join(' ') || label;
 
     const cityName = address.city || address.town || address.village || address.hamlet || 'Santa Fe';
@@ -676,7 +839,9 @@
       primary,
       secondary: localityPieces.join(', '),
       shortLabel: [primary, cityName].filter(Boolean).join(', '),
-      latlng
+      latlng,
+      houseNumber,
+      postcode: address.postcode || null
     };
   }
 
@@ -756,20 +921,29 @@
       }
 
       const query = addressInput.value;
+      const trimmed = query.replace(/\s+/g, ' ').trim();
 
-      if (!query || query.trim().length < AUTOCOMPLETE_CONFIG.minQueryLength) {
+      if (!trimmed) {
         hideSuggestions();
-        if (!query) {
-          setStatus('neutral', 'Search for an address to begin.');
-        } else {
-          setStatus('neutral', `Keep typing (min. ${AUTOCOMPLETE_CONFIG.minQueryLength} characters).`);
-        }
+        setStatus('neutral', 'Search for an address to begin.');
         return;
       }
 
+      if (trimmed.length < AUTOCOMPLETE_CONFIG.minQueryLength) {
+        hideSuggestions();
+        setStatus('neutral', `Keep typing (min. ${AUTOCOMPLETE_CONFIG.minQueryLength} characters).`);
+        return;
+      }
+
+      const delay = trimmed.length >= 7
+        ? 110
+        : trimmed.length >= 5
+          ? 150
+          : 210;
+
       searchDebounceTimer = window.setTimeout(() => {
         fetchSuggestions(query);
-      }, 250);
+      }, delay);
     });
 
     addressInput.addEventListener('keydown', (event) => {
