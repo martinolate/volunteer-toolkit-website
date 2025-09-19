@@ -471,7 +471,7 @@ main {
 .event-location {
   margin: 0;
   font-weight: 600;
-  color: rgba(30, 31, 36, 0.75);
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .events-page-main {
@@ -507,18 +507,21 @@ main {
   gap: 0.75rem;
   padding: 1.35rem;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 12px 26px rgba(30, 31, 36, 0.1);
+  background: #2f3037;
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 26px rgba(17, 17, 20, 0.4);
 }
 
 .event-card h3 {
   margin: 0;
   font-size: 1.15rem;
   font-weight: 700;
+  color: #ffffff;
 }
 
 .event-card p {
   margin: 0;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .event-meta {
@@ -527,7 +530,7 @@ main {
   gap: 0.5rem 1rem;
   align-items: center; /* Prevent tall stretch */
   font-weight: 600;
-  color: var(--color-success-ink);
+  color: #ffe27a;
 }
 
 .event-date {
@@ -538,7 +541,9 @@ main {
   white-space: nowrap;      /* Keep on one line */
   padding: 0.25rem 0.65rem;
   border-radius: 999px;
-  background: rgba(33, 144, 133, 0.15);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
 }
 
 .event-time {
@@ -549,7 +554,9 @@ main {
   white-space: nowrap;      /* Keep on one line */
   padding: 0.25rem 0.65rem;
   border-radius: 999px;
-  background: rgba(253, 213, 48, 0.3);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
 }
 
 .events {
